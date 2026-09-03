@@ -10,7 +10,7 @@
 
 | 分类 | Skill | 能做什么 |
 |---|---|---|
-| 设计与产品 | [`design-research-toolkit`](design-research-toolkit/) | 研究视觉参考，将其转化为原创、可执行的设计方向，同时避免复制受保护作品。 |
+| 设计与产品 | [`design-compass`](design-compass/) | 综合视觉、产品与实现参考，形成原创、有证据且可落地的设计方向。 |
 | 开发与运维 | [`website-release-manager`](website-release-manager/) | 产品开发完成后整理文件和文档，新建或关联 GitHub 仓库，再完成部署、验证和版本记录。 |
 | 金融与投资 | [`wealth-compass`](wealth-compass/) | 用证据校准的框架分析公司、资产、宏观环境、投资组合与投资论证。 |
 | 营销与增长 | [`youtube-kol-sourcing`](youtube-kol-sourcing/) | 根据具体营销活动搜寻、核验、评分、去重并整理 YouTube 创作者合作名单。 |
@@ -21,7 +21,7 @@
 
 ```text
 请安装这个 Agent Skill：
-https://github.com/ArloYi/arlo-skills/tree/main/design-research-toolkit
+https://github.com/ArloYi/arlo-skills/tree/main/design-compass
 ```
 
 按需将最后的目录替换成 `website-release-manager`、`wealth-compass` 或 `youtube-kol-sourcing`。
@@ -30,7 +30,7 @@ https://github.com/ArloYi/arlo-skills/tree/main/design-research-toolkit
 
 ```bash
 git clone https://github.com/ArloYi/arlo-skills.git
-cp -R arlo-skills/design-research-toolkit ~/.codex/skills/
+cp -R arlo-skills/design-compass ~/.codex/skills/
 ```
 
 只需安装具体 Skill 目录；仓库根目录的 README、CI 和 eval 文件不属于 Skill 安装内容。
@@ -40,7 +40,7 @@ cp -R arlo-skills/design-research-toolkit ~/.codex/skills/
 ### 设计与产品
 
 ```text
-使用 $design-research-toolkit 为这个 SaaS 落地页研究三个视觉方向，说明参考来源，但不要照搬现有作品。
+使用 $design-compass 为这个 SaaS 落地页研究三个视觉方向，说明参考来源，但不要照搬现有作品。
 ```
 
 ### 金融与投资
