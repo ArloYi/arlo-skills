@@ -1,9 +1,11 @@
 {
-  "design-research-toolkit": {
+  "design-compass": {
     "should_trigger": [
       "Research three visual directions for this landing page before we build it.",
       "Compare these reference sites and turn the findings into an original UI direction.",
-      "Should this dashboard use ECharts, SVG, or plain HTML for its charts?"
+      "Should this dashboard use ECharts, SVG, or plain HTML for its charts?",
+      "Find real product flows and visual references for redesigning this onboarding experience.",
+      "研究一些适合这个中文品牌网站的视觉参考，再整理成能直接开发的设计方向。"
     ],
     "should_not_trigger": [
       "Fix the authentication bug in this API.",

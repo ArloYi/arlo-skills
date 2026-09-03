@@ -1,0 +1,4 @@
+interface:
+  display_name: "Design Compass"
+  short_description: "Turn design references into a buildable direction"
+  default_prompt: "Use $design-compass to research relevant references and produce an original, evidence-backed design direction."

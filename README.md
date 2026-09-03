@@ -10,7 +10,7 @@ Each skill in this repository is an independent, installable package that follow
 
 | Category | Skill | What it does |
 |---|---|---|
-| Design & Product | [`design-research-toolkit`](design-research-toolkit/) | Research visual references and turn them into an original, actionable design direction without copying protected work. |
+| Design & Product | [`design-compass`](design-compass/) | Triangulate visual, product, and implementation references into an original, evidence-backed design direction. |
 | Development & Operations | [`website-release-manager`](website-release-manager/) | Prepare a finished website, create or connect its GitHub repository, deploy it with an appropriate method, verify production, and keep release records. |
 | Finance & Investing | [`wealth-compass`](wealth-compass/) | Analyze companies, assets, macro conditions, portfolios, and investment theses through an evidence-calibrated decision framework. |
 | Marketing & Growth | [`youtube-kol-sourcing`](youtube-kol-sourcing/) | Source, verify, score, deduplicate, and organize YouTube creator partners for a campaign-specific outreach pool. |
@@ -21,7 +21,7 @@ Ask a compatible coding agent to install one skill from its folder URL:
 
 ```text
 Install this Agent Skill:
-https://github.com/ArloYi/arlo-skills/tree/main/design-research-toolkit
+https://github.com/ArloYi/arlo-skills/tree/main/design-compass
 ```
 
 Replace the last path segment with `website-release-manager`, `wealth-compass`, or `youtube-kol-sourcing` as needed.
@@ -30,7 +30,7 @@ For Codex, you can also clone the collection and copy an individual folder into 
 
 ```bash
 git clone https://github.com/ArloYi/arlo-skills.git
-cp -R arlo-skills/design-research-toolkit ~/.codex/skills/
+cp -R arlo-skills/design-compass ~/.codex/skills/
 ```
 
 Install only the skill folders you need. The repository-level README, CI, and evaluation files are not part of an installed skill.
@@ -40,7 +40,7 @@ Install only the skill folders you need. The repository-level README, CI, and ev
 ### Design & Product
 
 ```text
-Use $design-research-toolkit to research three visual directions for this SaaS landing page. Cite the references and do not copy an existing composition.
+Use $design-compass to research three visual directions for this SaaS landing page. Cite the references and do not copy an existing composition.
 ```
 
 ### Finance & Investing
@@ -65,7 +65,7 @@ Use $youtube-kol-sourcing to build a verified YouTube creator shortlist for this
 
 ```text
 arlo-skills/
-├── design-research-toolkit/
+├── design-compass/
 │   ├── SKILL.md
 │   ├── agents/openai.yaml
 │   └── references/
