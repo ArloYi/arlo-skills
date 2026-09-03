@@ -1,0 +1,49 @@
+{
+  "design-research-toolkit": {
+    "should_trigger": [
+      "Research three visual directions for this landing page before we build it.",
+      "Compare these reference sites and turn the findings into an original UI direction.",
+      "Should this dashboard use ECharts, SVG, or plain HTML for its charts?"
+    ],
+    "should_not_trigger": [
+      "Fix the authentication bug in this API.",
+      "Calculate the return on this bond portfolio."
+    ]
+  },
+  "website-release-manager": {
+    "should_trigger": [
+      "这个网站更新完了，整理文件和文档后帮我走上线流程。",
+      "这个产品开发完了，帮我新建 GitHub 仓库并部署上线。",
+      "只把这个项目同步到 GitHub，不要部署。",
+      "把这个网站回滚到上一个明确的稳定版本。",
+      "给这个新网站建档并完成第一次上线。"
+    ],
+    "should_not_trigger": [
+      "解释一下 Git rebase 和 merge 的区别。",
+      "帮我修复本地页面的 CSS，但现在不要发布。",
+      "给我推荐一个静态网站托管平台。"
+    ]
+  },
+  "wealth-compass": {
+    "should_trigger": [
+      "Audit my investment thesis for this company and identify the assumptions that can break.",
+      "How would sticky inflation and falling growth affect this portfolio?",
+      "Compare these two ETFs after fees, taxes, liquidity, and risk."
+    ],
+    "should_not_trigger": [
+      "Make this landing page feel more premium.",
+      "Find YouTube creators for our product launch."
+    ]
+  },
+  "youtube-kol-sourcing": {
+    "should_trigger": [
+      "Build a verified YouTube creator shortlist for this campaign.",
+      "Deduplicate these YouTube KOL candidates against our outreach sheet.",
+      "Audit this creator list for recency, recent views, competitors, and public contacts."
+    ],
+    "should_not_trigger": [
+      "Summarize this YouTube video.",
+      "Write a generic influencer marketing strategy without sourcing creators."
+    ]
+  }
+}

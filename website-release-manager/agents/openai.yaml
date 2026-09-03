@@ -1,0 +1,4 @@
+interface:
+  display_name: "网站发布管家"
+  short_description: "整理项目、创建 GitHub 仓库并完成部署上线与版本记录"
+  default_prompt: "Use $website-release-manager to prepare this finished website, create or connect its GitHub repository, deploy it, verify production, and save the release record."

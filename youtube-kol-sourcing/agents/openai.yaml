@@ -1,0 +1,5 @@
+interface:
+  display_name: "YouTube KOL Sourcing"
+  short_description: "Source and verify YouTube creator partners"
+  default_prompt: "Use $youtube-kol-sourcing to collect the campaign profile, source YouTube creator partners, deduplicate prior lists, verify recency, views, and contact readiness, and produce a clean recommendation workbook."
+

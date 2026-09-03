@@ -1,0 +1,5 @@
+interface:
+  display_name: "Wealth Compass"
+  short_description: "Analyze investments with evidence, valuation, and risk"
+  default_prompt: "Use $wealth-compass to analyze this investment and provide evidence, valuation, risks, counterarguments, and bounded actions."
+
