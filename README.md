@@ -25,7 +25,7 @@ Install this Agent Skill:
 https://github.com/ArloYi/arlo-skills/tree/main/design-research-toolkit
 ```
 
-Replace the last path segment with `website-release-manager`, `wealth-compass`, or `youtube-kol-sourcing` as needed.
+Replace the last path segment with `website-release-manager`, `wealth-compass`, `youtube-kol-sourcing`, or `ai-trend-radar` as needed.
 
 For Codex, you can also clone the collection and copy an individual folder into your skills directory:
 
@@ -36,12 +36,12 @@ cp -R arlo-skills/design-research-toolkit ~/.codex/skills/
 
 Install only the skill folders you need. The repository-level README, CI, and evaluation files are not part of an installed skill.
 
-### AI Trend Radar preview
+### AI Trend Radar
 
-The new skill is available on `feat/ai-trend-radar` while its pull request is pending. See its [English introduction and installation guide](ai-trend-radar/README.md).
+AI Trend Radar is available on `main`. See its [English introduction and installation guide](ai-trend-radar/README.md).
 
 ```text
-Use $skill-installer to install ai-trend-radar from ArloYi/arlo-skills, ref feat/ai-trend-radar, path ai-trend-radar.
+Use $skill-installer to install ai-trend-radar from ArloYi/arlo-skills, ref main, path ai-trend-radar.
 ```
 
 ## Usage examples

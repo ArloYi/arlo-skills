@@ -17,18 +17,18 @@ The skill instructions, reference files, and UI metadata are in English. Reports
 
 ## Install
 
-This skill is initially published on the `feat/ai-trend-radar` branch. While its pull request is pending, use that branch rather than `main`.
+Install the skill from the repository's `main` branch.
 
 Ask Codex to install:
 
 ```text
-Use $skill-installer to install ai-trend-radar from ArloYi/arlo-skills, ref feat/ai-trend-radar, path ai-trend-radar.
+Use $skill-installer to install ai-trend-radar from ArloYi/arlo-skills, ref main, path ai-trend-radar.
 ```
 
 Or copy the skill folder from the published branch:
 
 ```bash
-git clone --branch feat/ai-trend-radar --single-branch https://github.com/ArloYi/arlo-skills.git
+git clone --branch main --single-branch https://github.com/ArloYi/arlo-skills.git
 mkdir -p ~/.codex/skills
 cp -R arlo-skills/ai-trend-radar ~/.codex/skills/
 ```

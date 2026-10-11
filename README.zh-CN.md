@@ -25,7 +25,7 @@
 https://github.com/ArloYi/arlo-skills/tree/main/design-research-toolkit
 ```
 
-按需将最后的目录替换成 `website-release-manager`、`wealth-compass` 或 `youtube-kol-sourcing`。
+按需将最后的目录替换成 `website-release-manager`、`wealth-compass`、`youtube-kol-sourcing` 或 `ai-trend-radar`。
 
 使用 Codex 时，也可以克隆整个合集，再复制需要的 Skill：
 
@@ -36,12 +36,12 @@ cp -R arlo-skills/design-research-toolkit ~/.codex/skills/
 
 只需安装具体 Skill 目录；仓库根目录的 README、CI 和 eval 文件不属于 Skill 安装内容。
 
-### AI Trend Radar 预览版
+### AI Trend Radar
 
-新 Skill 目前发布在 `feat/ai-trend-radar` 分支，PR 尚待合并。查看[英文介绍与安装说明](ai-trend-radar/README.md)，或直接让 Codex 安装：
+AI Trend Radar 已发布到 `main` 分支。查看[英文介绍与安装说明](ai-trend-radar/README.md)，或直接让 Codex 安装：
 
 ```text
-Use $skill-installer to install ai-trend-radar from ArloYi/arlo-skills, ref feat/ai-trend-radar, path ai-trend-radar.
+Use $skill-installer to install ai-trend-radar from ArloYi/arlo-skills, ref main, path ai-trend-radar.
 ```
 
 ## 使用示例
