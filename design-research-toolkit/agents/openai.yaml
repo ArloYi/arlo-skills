@@ -1,5 +1,0 @@
-interface:
-  display_name: "Design Research Toolkit"
-  short_description: "Research references and choose design tooling"
-  default_prompt: "Use $design-research-toolkit to research visual references and recommend a focused, original design direction."
-

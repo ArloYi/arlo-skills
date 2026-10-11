@@ -11,7 +11,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SKILLS = (
-    "design-research-toolkit",
+    "design-compass",
     "website-release-manager",
     "wealth-compass",
     "youtube-kol-sourcing",
