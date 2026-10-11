@@ -15,6 +15,7 @@ SKILLS = (
     "website-release-manager",
     "wealth-compass",
     "youtube-kol-sourcing",
+    "ai-trend-radar",
 )
 NAME_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 LINK_PATTERN = re.compile(r"\[[^\]]+\]\(([^)]+)\)")

@@ -1,0 +1,4 @@
+interface:
+  display_name: "AI Trend Radar"
+  short_description: "Find and verify consequential global AI signals"
+  default_prompt: "Use $ai-trend-radar to scan recent global AI developments and produce a selective, source-backed briefing in Simplified Chinese."
