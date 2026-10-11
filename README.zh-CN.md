@@ -1,6 +1,6 @@
 # Arlo Skills
 
-一套实用的 AI Skills 合集，涵盖设计研究、网站发布运维、投资分析与 YouTube 创作者筛选，提供英文文档和简体中文概览。
+一套实用的 AI Skills 合集，涵盖设计研究、网站发布运维、投资分析、YouTube 创作者筛选与 AI 趋势研究，提供英文文档和简体中文概览。
 
 [English](README.md)
 
@@ -14,6 +14,7 @@
 | 开发与运维 | [`website-release-manager`](website-release-manager/) | 产品开发完成后整理文件和文档，新建或关联 GitHub 仓库，再完成部署、验证和版本记录。 |
 | 金融与投资 | [`wealth-compass`](wealth-compass/) | 用证据校准的框架分析公司、资产、宏观环境、投资组合与投资论证。 |
 | 营销与增长 | [`youtube-kol-sourcing`](youtube-kol-sourcing/) | 根据具体营销活动搜寻、核验、评分、去重并整理 YouTube 创作者合作名单。 |
+| AI 研究与情报 | [`ai-trend-radar`](ai-trend-radar/) | 扫描全球 AI 近期动态，核验原始来源，筛出值得关注的变化并给出具体判断。 |
 
 ## 安装
 
@@ -34,6 +35,14 @@ cp -R arlo-skills/design-research-toolkit ~/.codex/skills/
 ```
 
 只需安装具体 Skill 目录；仓库根目录的 README、CI 和 eval 文件不属于 Skill 安装内容。
+
+### AI Trend Radar 预览版
+
+新 Skill 目前发布在 `feat/ai-trend-radar` 分支，PR 尚待合并。查看[英文介绍与安装说明](ai-trend-radar/README.md)，或直接让 Codex 安装：
+
+```text
+Use $skill-installer to install ai-trend-radar from ArloYi/arlo-skills, ref feat/ai-trend-radar, path ai-trend-radar.
+```
 
 ## 使用示例
 
@@ -61,6 +70,14 @@ cp -R arlo-skills/design-research-toolkit ~/.codex/skills/
 使用 $youtube-kol-sourcing 为这个活动建立经过核验的 YouTube 创作者名单，并与历史联络表去重。
 ```
 
+### AI 研究与情报
+
+```text
+使用 $ai-trend-radar 扫描今天的全球 AI 动态，核验原始来源，最多选出 10 条真正值得关注的变化。
+```
+
+Skill 指令、参考文件和界面元数据均为英文，报告默认简体中文，可在调用时切换语言。支持限定主题、时间范围和数量，也支持详细报告与按需保存历史记录。实时信息依赖联网搜索；跨次去重需要历史报告；每天自动运行需要另外配置自动化。
+
 ## 整理原则
 
 - `SKILL.md`：触发条件、核心流程、边界与输出合同。
@@ -77,6 +94,7 @@ cp -R arlo-skills/design-research-toolkit ~/.codex/skills/
 - 投资分析使用概率、范围和情景表达不确定性，不承诺收益。
 - 创作者筛选不得编造联系方式，也不得绕过登录、验证码或平台限制。
 - 网站发布不得猜测项目身份、凭证、供应商或生产目标；只部署已留存在远程仓库的精确 SHA，区分日常代码发布与基础设施变更，并要求存在经过验证的回滚路径。
+- AI 雷达如实记录实际检查的候选事件数，区分厂商自测、传闻与已核验事实，不承诺全网覆盖或后台持续监控。
 - Skill 发布到公开仓库前必须维护经过筛选、泛化和脱敏的公开副本，不直接镜像本机目录或保留个人习惯与项目数据。
 
 本地验证命令：

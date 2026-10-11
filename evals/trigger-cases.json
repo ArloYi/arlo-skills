@@ -45,5 +45,19 @@
       "Summarize this YouTube video.",
       "Write a generic influencer marketing strategy without sourcing creators."
     ]
+  },
+  "ai-trend-radar": {
+    "should_trigger": [
+      "Scan today's global AI developments and select the changes that matter, with original sources.",
+      "Use AI Trend Radar for the last 24 hours of coding agents and developer tools. Give me at most five items.",
+      "Produce a detailed daily AI briefing and distinguish vendor claims from independent tests.",
+      "Save today's AI radar and check the supplied history for substantive follow-ups and repeated stories."
+    ],
+    "should_not_trigger": [
+      "Summarize only this one AI research paper.",
+      "Build an AI news website with a subscription page.",
+      "Explain what a transformer is without researching current news.",
+      "Install the ai-trend-radar skill from this repository."
+    ]
   }
 }
