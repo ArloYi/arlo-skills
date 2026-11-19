@@ -11,6 +11,7 @@ import os
 from pathlib import Path
 import re
 import shutil
+import ssl
 import subprocess
 import sys
 import urllib.error
@@ -45,9 +46,13 @@ def read_json(path: Path) -> dict:
 
 
 def write_json_atomic(path: Path, value: dict) -> None:
+    write_text_atomic(path, json.dumps(value, ensure_ascii=False, indent=2) + "\n")
+
+
+def write_text_atomic(path: Path, text: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     temp = path.with_name(f".{path.name}.tmp-{os.getpid()}")
-    temp.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    temp.write_text(text, encoding="utf-8")
     temp.replace(path)
 
 
@@ -183,8 +188,9 @@ def validate_profile(project: Path, profile: dict) -> list[str]:
     urls = verification.get("urls")
     if not isinstance(urls, list):
         errors.append("verification.urls must be an array")
-    elif deployment.get("ready") is True and not urls:
-        errors.append("deployment.ready requires at least one verification URL")
+    elif deployment.get("ready") is True and not any(verification.get(k) for k in
+            ("urls", "protected_urls", "release_manifest_path", "version_command")):
+        errors.append("deployment.ready requires online verification")
 
     release = profile.get("release", {})
     try:
@@ -452,6 +458,11 @@ def command_next_version(args: argparse.Namespace) -> None:
         match = VERSION_RE.fullmatch(previous)
         if match:
             sequence = int(match.group(4)) + 1
+    log_path = release_log_path(project, profile)
+    if log_path.exists():
+        for n in re.findall(r"^<!-- release:" + re.escape(prefix) + r"(\d+):start -->$",
+                            log_path.read_text(encoding="utf-8"), re.MULTILINE):
+            sequence = max(sequence, int(n) + 1)
     print(f"{prefix}{sequence}")
 
 
@@ -532,10 +543,15 @@ def command_verify_stage(args: argparse.Namespace) -> None:
     print(f"stage valid: {len(actual)} file(s), {release.get('version')}, {release.get('commit')}")
 
 
+def open_remote(url: str):
+    request = urllib.request.Request(url, headers={"User-Agent": "website-release-manager/2", "Cache-Control": "no-cache"})
+    context = ssl.create_default_context(cafile=os.environ.get("SSL_CERT_FILE") or None)
+    return urllib.request.urlopen(request, timeout=15, context=context)
+
+
 def fetch_json(url: str) -> tuple[int, dict]:
-    request = urllib.request.Request(url, headers={"User-Agent": "website-release-manager/2"})
     try:
-        with urllib.request.urlopen(request, timeout=15) as response:
+        with open_remote(url) as response:
             status = response.status
             data = json.loads(response.read().decode("utf-8"))
     except (urllib.error.URLError, json.JSONDecodeError) as exc:
@@ -546,9 +562,8 @@ def fetch_json(url: str) -> tuple[int, dict]:
 
 
 def fetch_status(url: str) -> int:
-    request = urllib.request.Request(url, headers={"User-Agent": "website-release-manager/2"})
     try:
-        with urllib.request.urlopen(request, timeout=15) as response:
+        with open_remote(url) as response:
             return response.status
     except urllib.error.HTTPError as exc:
         return exc.code
@@ -559,14 +574,35 @@ def fetch_status(url: str) -> int:
 def command_verify_remote(args: argparse.Namespace) -> None:
     project = project_root(args.project)
     _, profile = load_profile(project)
-    base = profile["site"]["production_url"].rstrip("/")
-    manifest_path = profile["verification"].get("release_manifest_path")
+    result = verify_remote(project, profile, args.version, args.commit)
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+    if not result["version_verified"]:
+        raise ReleaseError("site reachable; version pending")
+
+
+def verify_remote(project: Path, profile: dict, version: str, commit: str) -> dict:
+    verification = profile["verification"]
+    manifest_path = verification.get("release_manifest_path")
     manifest_result = "not configured"
     if manifest_path:
+        base = profile["site"].get("production_url", "").rstrip("/")
+        if not base:
+            raise ReleaseError("pending verification: site.production_url is missing")
         status, remote = fetch_json(base + "/" + str(manifest_path).lstrip("/"))
-        if status != 200 or remote.get("version") != args.version or remote.get("commit") != args.commit:
+        if status != 200 or remote.get("version") != version or remote.get("commit") != commit:
             raise ReleaseError("remote release marker does not match expected version and commit")
         manifest_result = "match"
+    command = verification.get("version_command")
+    if command is not None:
+        if not isinstance(command, list) or not command or not all(isinstance(arg, str) and arg for arg in command):
+            raise ReleaseError("verification.version_command must be a non-empty argument array")
+        try:
+            result = subprocess.run(command, cwd=project, capture_output=True, text=True, check=True, timeout=30)
+            observed = json.loads(result.stdout)
+        except (OSError, subprocess.SubprocessError, ValueError) as exc:
+            raise ReleaseError("production version command failed or returned invalid JSON") from exc
+        if not isinstance(observed, dict) or observed.get("version") != version or observed.get("commit") != commit:
+            raise ReleaseError("production version command did not confirm the expected version and commit")
     results = []
     for check in [*profile["verification"].get("urls", []), *profile["verification"].get("protected_urls", [])]:
         actual = fetch_status(check["url"])
@@ -574,7 +610,10 @@ def command_verify_remote(args: argparse.Namespace) -> None:
         results.append({"url": check["url"], "expected": expected, "actual": actual})
         if actual != expected:
             raise ReleaseError(f"unexpected status for {check['url']}: {actual}, expected {expected}")
-    print(json.dumps({"release_manifest": manifest_result, "checks": results}, ensure_ascii=False, indent=2))
+    matched = manifest_result == "match" or command is not None
+    if not results and not matched:
+        raise ReleaseError("pending verification: no production checks configured")
+    return {"version_verified": matched, "release_manifest": manifest_result, "checks": results}
 
 
 def release_log_path(project: Path, profile: dict) -> Path:
@@ -582,8 +621,34 @@ def release_log_path(project: Path, profile: dict) -> Path:
     return project / log_rel
 
 
+def release_entry(history: str, version: str):
+    return re.search(
+        r"^<!-- release:" + re.escape(version) + r":start -->\n.*?^<!-- release:"
+        + re.escape(version) + r":end -->$", history, re.MULTILINE | re.DOTALL,
+    )
+
+
+def entry_field(entry: str, label: str) -> Optional[str]:
+    match = re.search(r"^- " + label + r"：`([^`\n]+)`$", entry, re.MULTILINE)
+    return match.group(1) if match else None
+
+
 def command_record(args: argparse.Namespace) -> None:
     project = project_root(args.project)
+    lock = project / PROFILE_PATH.parent / ".release-record.lock"
+    try:
+        lock.mkdir()
+    except FileNotFoundError:
+        raise ReleaseError(f"missing project profile: {PROFILE_PATH}") from None
+    except FileExistsError:
+        raise ReleaseError("release record busy: another writer holds .release-record.lock") from None
+    try:
+        record_verified(project, args)
+    finally:
+        lock.rmdir()
+
+
+def record_verified(project: Path, args: argparse.Namespace) -> None:
     profile_path, profile = load_profile(project)
     errors = validate_profile(project, profile)
     if errors:
@@ -600,23 +665,39 @@ def command_record(args: argparse.Namespace) -> None:
         raise ReleaseError("record requires --change or --summary")
     if not args.commit:
         raise ReleaseError("--commit is required for release records")
-    if args.status == "success":
-        profile["production"] = {
-            "last_successful_version": args.version,
-            "commit": args.commit,
-            "released_at": now.isoformat(),
-            "rollback_point": args.rollback,
-        }
-        profile.setdefault("rollback", {})["last_known_good_version"] = args.rollback
-        write_json_atomic(profile_path, profile)
-    labels = {"success": "成功", "rolled-back": "已回滚"}
+    history = log_path.read_text(encoding="utf-8") if log_path.exists() else ""
+    match = release_entry(history, args.version)
+    original = match.group() if match else ""
+    if match and entry_field(original, "代码") != args.commit:
+        raise ReleaseError("version already recorded with a different commit")
+    active_version, active_commit, fallback = args.version, args.commit, args.rollback
+    if args.status == "rolled-back":
+        if not match or not args.rollback or args.rollback == args.version:
+            raise ReleaseError("rollback needs a recorded source and a distinct destination")
+        target = release_entry(history, args.rollback)
+        recorded_commit = entry_field(target.group(), "代码") if target else None
+        if args.rollback_commit and recorded_commit and args.rollback_commit != recorded_commit:
+            raise ReleaseError("rollback destination conflicts with release history")
+        active_version, active_commit = args.rollback, recorded_commit or args.rollback_commit
+        if not active_commit:
+            raise ReleaseError("missing destination SHA: supply --rollback-commit for a legacy target")
+        fallback = entry_field(target.group(), "回滚点") if target else None
+        current = profile.get("production", {})
+        source_matches = (current.get("last_successful_version"), current.get("commit")) == (args.version, args.commit)
+        retry_matches = ("- 状态：已回滚" in original.splitlines() and
+                         (current.get("last_successful_version"), current.get("commit")) == (active_version, active_commit))
+        if not source_matches and not retry_matches:
+            raise ReleaseError("rollback source is not the recorded production version")
+    evidence = verify_remote(project, profile, active_version, active_commit)
+    if not evidence["version_verified"]:
+        raise ReleaseError("site reachable; version pending: configure release_manifest_path or version_command")
     marker_start = f"<!-- release:{args.version}:start -->"
     marker_end = f"<!-- release:{args.version}:end -->"
     lines = [
         marker_start,
         f"### {args.version} — {now.date().isoformat()}",
         "",
-        f"- 状态：{labels[args.status]}",
+        "- 状态：成功",
         f"- 网站：{profile['site'].get('production_url', '未配置')}",
         f"- 代码：`{args.commit}`",
         f"- 时间：{now.isoformat()}",
@@ -626,21 +707,49 @@ def command_record(args: argparse.Namespace) -> None:
     lines.extend(["", "### 本版改动", "", *[f"- {change}" for change in changes]])
     lines.extend([marker_end, ""])
     block = "\n".join(lines)
-    existing = log_path.read_text(encoding="utf-8") if log_path.exists() else ""
-    marker_pattern = re.compile(
-        re.escape(marker_start) + r".*?" + re.escape(marker_end) + r"\n?",
-        flags=re.DOTALL,
-    )
-    if marker_pattern.search(existing):
-        updated = marker_pattern.sub(block, existing, count=1)
+    existing = history
+    if args.status == "rolled-back":
+        destination = f"- 回滚后线上：`{active_version}` / `{active_commit}`"
+        if "- 状态：已回滚" in original.splitlines():
+            if destination not in original.splitlines():
+                raise ReleaseError("existing rollback record has a different or unknown destination")
+            updated = existing
+        else:
+            prior = original.removesuffix(marker_end).replace("- 状态：成功\n", "- 状态：已回滚\n", 1)
+            event = ["", "#### 回滚记录", "", f"- 回滚时间：{now.isoformat()}", destination,
+                     *[f"- {item}" for item in changes], marker_end]
+            updated = existing[:match.start()] + prior + "\n".join(event) + existing[match.end():]
+    elif match:
+        if "- 状态：成功" not in original.splitlines():
+            raise ReleaseError("release version already rolled back; use a new version")
+        updated = existing
     else:
         if re.search(rf"^##+\s+{re.escape(args.version)}(?:\s|$)", existing, flags=re.MULTILINE):
             raise ReleaseError(f"release log contains an unmanaged entry for {args.version}")
         if not existing:
             existing = "# 本地完整修改日志\n\n## 完整迭代时间线\n"
-        prefix = existing.rstrip()
-        updated = f"{prefix}\n\n{block}" if prefix else block
-    log_path.write_text(updated.rstrip() + "\n", encoding="utf-8")
+        timeline = re.search(r"^## 完整迭代时间线\s*$", existing, re.MULTILINE)
+        following = re.compile(r"^## ", re.MULTILINE).search(existing, timeline.end()) if timeline else None
+        pos = following.start() if following else len(existing)
+        updated = existing[:pos].rstrip() + "\n\n" + block + "\n" + existing[pos:]
+    # Preserve the event timestamp on retries, including recovery after a profile write failure.
+    event_label = "回滚时间" if args.status == "rolled-back" else "时间"
+    event_time = re.search(r"^- " + event_label + r"：(.+)$", release_entry(updated, args.version).group(), re.MULTILINE)
+    if not event_time:
+        raise ReleaseError("release history is missing its event time")
+    snapshot = (f"<!-- production:start -->\n当前线上版本：`{active_version}` · "
+                f"代码：`{active_commit}`\n<!-- production:end -->")
+    snapshot_pattern = r"^<!-- production:start -->\n.*?^<!-- production:end -->$"
+    if re.search(snapshot_pattern, updated, re.MULTILINE | re.DOTALL):
+        updated = re.sub(snapshot_pattern, lambda _: snapshot, updated, count=1, flags=re.MULTILINE | re.DOTALL)
+    else:
+        title, _, rest = updated.partition("\n")
+        updated = f"{title}\n\n{snapshot}\n{rest}"
+    profile.setdefault("production", {}).update(last_successful_version=active_version, commit=active_commit,
+                                                released_at=event_time.group(1), rollback_point=fallback)
+    profile.setdefault("rollback", {})["last_known_good_version"] = active_version if args.status == "rolled-back" else fallback
+    write_text_atomic(log_path, updated.rstrip() + "\n")
+    write_json_atomic(profile_path, profile)
     print(f"recorded {args.status}: {args.version}")
 
 
@@ -701,6 +810,7 @@ def parser() -> argparse.ArgumentParser:
     record.add_argument("--version", required=True)
     record.add_argument("--commit")
     record.add_argument("--rollback")
+    record.add_argument("--rollback-commit", help="destination SHA if the older release has no managed log entry")
     record.add_argument("--summary")
     record.add_argument("--change", action="append", default=[])
     record.set_defaults(func=command_record)

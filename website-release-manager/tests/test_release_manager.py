@@ -1,11 +1,17 @@
 from __future__ import annotations
 
 import json
+import functools
+import http.server
+import os
 from pathlib import Path
 import re
 import subprocess
+import ssl
 import sys
 import tempfile
+import threading
+import urllib.request
 import unittest
 
 
@@ -112,7 +118,7 @@ class ReleaseManagerTests(unittest.TestCase):
     def run_cli(self, *args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
         return subprocess.run(
             [sys.executable, str(SCRIPT), *args], check=check, text=True,
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=getattr(self, "cli_env", None),
         )
 
     def test_stage_uses_public_summary_and_private_manifest(self) -> None:
@@ -133,8 +139,37 @@ class ReleaseManagerTests(unittest.TestCase):
         result = self.run_cli("verify-stage", "--stage", str(stage), check=False)
         self.assertNotEqual(result.returncode, 0)
 
-    def test_success_record_is_replaced_by_rollback(self) -> None:
-        version = "v2026.08.11.1"
+    def start_test_site(self):
+        root = Path(self.temp.name)
+        cert, key = root / "cert.pem", root / "key.pem"
+        config = root / "openssl.cnf"
+        config.write_text("[req]\ndistinguished_name=dn\nx509_extensions=ext\n[dn]\n[ext]\n"
+                          "subjectAltName=DNS:localhost\nbasicConstraints=critical,CA:TRUE\n")
+        subprocess.run(["openssl", "req", "-x509", "-newkey", "rsa:2048", "-nodes", "-days", "1",
+                        "-subj", "/CN=localhost", "-config", str(config), "-out", str(cert),
+                        "-keyout", str(key)], check=True, capture_output=True)
+        current = root / "current"
+        handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(current))
+        server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), handler)
+        self.addCleanup(server.server_close)
+        ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        ctx.load_cert_chain(cert, key)
+        server.socket = ctx.wrap_socket(server.socket, server_side=True)
+        worker = threading.Thread(target=server.serve_forever, daemon=True)
+        worker.start()
+        self.addCleanup(worker.join)
+        self.addCleanup(server.shutdown)
+        self.cli_env = {**os.environ, "SSL_CERT_FILE": str(cert), "no_proxy": "localhost"}
+        url = f"https://localhost:{server.server_port}"
+        profile_path = self.project / ".codex" / "release-profile.json"
+        profile = json.loads(profile_path.read_text())
+        profile["site"]["production_url"] = url
+        profile["verification"]["urls"] = [{"url": url + "/runtime/index.html", "status": 200}]
+        profile_path.write_text(json.dumps(profile))
+        return current, url, ssl.create_default_context(cafile=str(cert))
+
+    def test_live_release_then_rollback(self) -> None:
+        current, url, tls = self.start_test_site()
         log_path = self.project / "docs" / "RELEASES.md"
         log_path.parent.mkdir()
         log_path.write_text(
@@ -144,17 +179,43 @@ class ReleaseManagerTests(unittest.TestCase):
             "## 当前仍未开放的功能\n\n- Add deployment analytics\n",
             encoding="utf-8",
         )
-        self.run_cli(
-            "record", "--project", str(self.project), "--status", "success",
-            "--version", version, "--commit", self.commit,
-            "--rollback", "v2026.08.10.1", "--change", "Release complete",
-            "--change", "Document rollback",
-        )
-        self.run_cli(
-            "record", "--project", str(self.project), "--status", "rolled-back",
-            "--version", version, "--commit", self.commit,
-            "--rollback", "v2026.08.10.1", "--change", "Rollback completed",
-        )
+        first = "v2026.08.11.1"
+        version = "v2026.08.11.2"
+        commits = {}
+        def activate(v):
+            candidate = current.with_name("candidate")
+            candidate.symlink_to(current.with_name(v))
+            candidate.replace(current)
+
+        for v, content, previous in [(first, "page A", "pre-launch"), (version, "page B", first)]:
+            (self.project / "dist/index.html").write_text(content)
+            self.git("add", ".")
+            self.git("commit", "-m", v)
+            sha = self.git("rev-parse", "HEAD").stdout.strip()
+            commits[v] = sha
+            stage = current.with_name(v)
+            self.run_cli("stage", "--project", str(self.project), "--output", str(stage),
+                         "--version", v, "--commit", sha)
+            self.run_cli("verify-stage", "--stage", str(stage))
+            activate(v)
+            with urllib.request.urlopen(url + "/runtime/index.html", context=tls) as response:
+                self.assertEqual(response.read().decode(), content)
+            self.run_cli("record", "--project", str(self.project), "--status", "success",
+                         "--version", v, "--commit", sha, "--rollback", previous, "--change", content)
+        original = log_path.read_text()
+        b_time = original.split(f"<!-- release:{version}:start -->")[1].split("- 时间：")[1].splitlines()[0]
+        rollback = ["record", "--project", str(self.project), "--status", "rolled-back",
+                    "--version", version, "--commit", commits[version], "--rollback", first,
+                    "--change", "Rollback completed"]
+        self.assertNotEqual(self.run_cli(*rollback, check=False).returncode, 0)
+        self.assertEqual(log_path.read_text(), original)
+        activate(first)
+        self.run_cli(*rollback)
+        self.run_cli(*rollback)
+        with urllib.request.urlopen(url + "/release.json", context=tls) as response:
+            live = json.load(response)
+        with urllib.request.urlopen(url + "/runtime/index.html", context=tls) as response:
+            self.assertEqual(response.read(), b"page A")
         log = (self.project / "docs" / "RELEASES.md").read_text(encoding="utf-8")
         self.assertEqual(log.count(f"### {version}"), 1)
         self.assertIn("状态：已回滚", log)
@@ -164,15 +225,30 @@ class ReleaseManagerTests(unittest.TestCase):
         self.assertIn("- Add deployment analytics", log)
         self.assertIn("### 本版改动", log)
         self.assertIn("- Rollback completed", log)
-        self.assertIn(f"- 代码：`{self.commit}`", log)
-        self.assertIn("- 回滚点：`v2026.08.10.1`", log)
+        self.assertIn(f"- 代码：`{commits[version]}`", log)
+        self.assertIn("- page B", log)
+        self.assertIn(f"- 时间：{b_time}", log.split(f"<!-- release:{version}:start -->")[1])
+        self.assertEqual(log.count("#### 回滚记录"), 1)
+        self.assertIn(f"- 回滚后线上：`{first}` / `{commits[first]}`", log)
+        self.assertEqual(re.findall(r"当前线上版本：`([^`]+)` · 代码：`([^`]+)`", log),
+                         [(live["version"], live["commit"])])
         updated = json.loads(
             (self.project / ".codex" / "release-profile.json").read_text(encoding="utf-8")
         )
-        self.assertEqual(updated["production"]["commit"], self.commit)
-        self.assertEqual(updated["rollback"]["last_known_good_version"], "v2026.08.10.1")
+        self.assertEqual((live["version"], live["commit"]), (first, commits[first]))
+        self.assertEqual(updated["production"]["commit"], live["commit"])
+        self.assertEqual(updated["production"]["last_successful_version"], live["version"])
+        self.assertEqual(self.run_cli("next-version", "--project", str(self.project),
+                                      "--date", "2026-08-11").stdout.strip(), "v2026.08.11.3")
+        print(f"HTTPS rehearsal: A {commits[first][:8]} -> B {commits[version][:8]} -> A {live['commit'][:8]}; "
+              "page, manifest, profile and log agree")
 
     def test_new_log_uses_complete_history_heading(self) -> None:
+        profile_path = self.project / ".codex/release-profile.json"
+        profile = json.loads(profile_path.read_text())
+        profile["verification"] = {"urls": [], "version_command": [sys.executable, "-c",
+            "import json; print(json.dumps(" + repr({"version": "v2026.08.11.1", "commit": self.commit}) + "))"]}
+        profile_path.write_text(json.dumps(profile))
         self.run_cli(
             "record", "--project", str(self.project), "--status", "success",
             "--version", "v2026.08.11.1", "--commit", self.commit,
@@ -182,6 +258,27 @@ class ReleaseManagerTests(unittest.TestCase):
         self.assertIn("# 本地完整修改日志", log)
         self.assertIn("## 完整迭代时间线", log)
         self.assertIn("### v2026.08.11.1", log)
+
+    def test_empty_checks_and_status_only_cannot_record_release(self):
+        current, url, _ = self.start_test_site()
+        current.symlink_to(self.project / "dist")
+        path = self.project / ".codex/release-profile.json"
+        profile = json.loads(path.read_text())
+        for urls in ([], [{"url": url + "/index.html"}]):
+            profile["verification"] = {"urls": urls}
+            before = json.dumps(profile)
+            path.write_text(before)
+            args = ["--project", str(self.project), "--version", "test", "--commit", self.commit]
+            result = self.run_cli("verify-remote", *args, check=False)
+            if urls:
+                self.assertNotEqual(result.returncode, 0)
+                self.assertFalse(json.loads(result.stdout)["version_verified"])
+            else:
+                self.assertNotEqual(result.returncode, 0)
+            self.assertNotEqual(self.run_cli("record", *args, "--status", "success", "--change", "test",
+                                             check=False).returncode, 0)
+            self.assertFalse((self.project / "docs/RELEASES.md").exists())
+            self.assertEqual(path.read_text(), before)
 
     def test_registry_upsert_is_idempotent(self) -> None:
         registry = Path(self.temp.name) / "sites.json"

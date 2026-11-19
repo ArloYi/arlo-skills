@@ -42,6 +42,7 @@
 
 - `artifacts`：需要生成独立发布包时记录来源和目标。
 - `verification.release_manifest_path`：网站公开版本标记时使用。
+- 没有版本标记时可设置 `verification.version_command`，使用受信任的项目命令参数数组。命令从当前生产环境或托管平台读取实际部署结果，成功时向标准输出写入含 `version`、`commit` 的 JSON 对象，查询失败以非零码退出。不得用本地 HEAD、预期参数或固定 JSON 充当线上证据。
 - `rollback`：项目具有明确回滚能力时记录策略和稳定版本。
 - `production`：保存最近成功上线的版本、SHA、时间和回滚点。
 - `approvals`：保存用户已经批准的常规操作范围。
