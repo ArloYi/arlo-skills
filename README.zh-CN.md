@@ -1,6 +1,6 @@
 # Arlo Skills
 
-一套实用的 AI Skills 合集，涵盖设计研究、网站发布运维、投资分析、YouTube 创作者筛选与 AI 趋势研究，提供英文文档和简体中文概览。
+一套实用的 AI Skills 合集，涵盖设计研究、网站发布运维、投资分析、YouTube 创作者筛选、AI 趋势研究与国学考证，提供英文文档和简体中文概览。
 
 [English](README.md)
 
@@ -15,6 +15,7 @@
 | 金融与投资 | [`wealth-compass`](wealth-compass/) | 用证据校准的框架分析公司、资产、宏观环境、投资组合与投资论证。 |
 | 营销与增长 | [`youtube-kol-sourcing`](youtube-kol-sourcing/) | 根据具体营销活动搜寻、核验、评分、去重并整理 YouTube 创作者合作名单。 |
 | AI 研究与情报 | [`ai-trend-radar`](ai-trend-radar/) | 扫描全球 AI 近期动态，核验原始来源，筛出值得关注的变化并给出具体判断。 |
+| 国学与人文 | [`guoxue-da-jieguo`](guoxue-da-jieguo/) · 国学大结果skill | 查古籍和近现代讲述、核对语录出处，区分原典、解读与当代应用。 |
 
 ## 安装
 
@@ -25,7 +26,7 @@
 https://github.com/ArloYi/arlo-skills/tree/main/design-research-toolkit
 ```
 
-按需将最后的目录替换成 `website-release-manager`、`wealth-compass`、`youtube-kol-sourcing` 或 `ai-trend-radar`。
+按需将最后的目录替换成 `website-release-manager`、`wealth-compass`、`youtube-kol-sourcing`、`ai-trend-radar` 或 `guoxue-da-jieguo`。
 
 使用 Codex 时，也可以克隆整个合集，再复制需要的 Skill：
 
@@ -77,6 +78,12 @@ Use $skill-installer to install ai-trend-radar from ArloYi/arlo-skills, ref main
 ```
 
 Skill 指令、参考文件和界面元数据均为英文，报告默认简体中文，可在调用时切换语言。支持限定主题、时间范围和数量，也支持详细报告与按需保存历史记录。实时信息依赖联网搜索；跨次去重需要历史报告；每天自动运行需要另外配置自动化。
+
+### 国学与人文
+
+```text
+使用 $guoxue-da-jieguo 核查「淡泊明志，宁静致远」的来源，对照底本，再说它和命运有何关系。
+```
 
 ## 整理原则
 

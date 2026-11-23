@@ -1,6 +1,6 @@
 # Arlo Skills
 
-A practical collection of AI skills for design research, website release operations, investment analysis, YouTube creator sourcing, and AI trend research, with English documentation and a Simplified Chinese overview.
+A practical collection of AI skills for design research, website release operations, investment analysis, YouTube creator sourcing, AI trend research, and Chinese classics, with English documentation and a Simplified Chinese overview.
 
 [简体中文](README.zh-CN.md)
 
@@ -15,6 +15,7 @@ Each skill in this repository is an independent, installable package that follow
 | Finance & Investing | [`wealth-compass`](wealth-compass/) | Analyze companies, assets, macro conditions, portfolios, and investment theses through an evidence-calibrated decision framework. |
 | Marketing & Growth | [`youtube-kol-sourcing`](youtube-kol-sourcing/) | Source, verify, score, deduplicate, and organize YouTube creator partners for a campaign-specific outreach pool. |
 | AI Research & Intelligence | [`ai-trend-radar`](ai-trend-radar/) | Scan recent global AI developments, verify original sources, and select consequential signals with editorial judgment. |
+| Chinese Classics & Humanities | [`guoxue-da-jieguo`](guoxue-da-jieguo/) | Locate classical passages and modern lectures, verify attributions, and distinguish evidence from interpretation. |
 
 ## Install
 
@@ -25,7 +26,7 @@ Install this Agent Skill:
 https://github.com/ArloYi/arlo-skills/tree/main/design-research-toolkit
 ```
 
-Replace the last path segment with `website-release-manager`, `wealth-compass`, `youtube-kol-sourcing`, or `ai-trend-radar` as needed.
+Replace the last path segment with `website-release-manager`, `wealth-compass`, `youtube-kol-sourcing`, `ai-trend-radar`, or `guoxue-da-jieguo` as needed.
 
 For Codex, you can also clone the collection and copy an individual folder into your skills directory:
 
@@ -78,6 +79,14 @@ Use $ai-trend-radar to scan today's global AI developments, verify original sour
 
 The skill instructions are English; reports default to Simplified Chinese unless another language is requested. Live search is required for current information, history is needed for cross-run deduplication, and daily scheduling is configured separately.
 
+### Chinese Classics & Humanities
+
+```text
+Use $guoxue-da-jieguo to trace the origin of a saying attributed to Zhuge Liang, then explain what the text does and does not imply about fate.
+```
+
+The skill instructions and references are in Simplified Chinese.
+
 ## Repository structure
 
 ```text
@@ -103,6 +112,10 @@ arlo-skills/
 ├── ai-trend-radar/
 │   ├── SKILL.md
 │   ├── README.md
+│   ├── agents/openai.yaml
+│   └── references/
+├── guoxue-da-jieguo/
+│   ├── SKILL.md
 │   ├── agents/openai.yaml
 │   └── references/
 ├── evals/trigger-cases.json

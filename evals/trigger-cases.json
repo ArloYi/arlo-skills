@@ -59,5 +59,17 @@
       "Explain what a transformer is without researching current news.",
       "Install the ai-trend-radar skill from this repository."
     ]
+  },
+  "guoxue-da-jieguo": {
+    "should_trigger": [
+      "诸葛亮说过‘淡泊明志，宁静致远’吗？请对照不同底本。",
+      "结合这五大家，对于命运有何解读？请分清有出处的主张和你的引申。",
+      "比较曾仕强谈命运的讲座与《孟子·尽心上》，用白话讲清楚不同。"
+    ],
+    "should_not_trigger": [
+      "写一个 Python 脚本合并这两份 CSV。",
+      "帮我修一下网站首页的字体和留白。",
+      "咳嗽发烧三天，直接给我开一副药。"
+    ]
   }
 }

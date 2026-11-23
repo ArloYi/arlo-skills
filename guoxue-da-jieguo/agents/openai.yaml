@@ -1,0 +1,4 @@
+interface:
+  display_name: "国学大结果skill"
+  short_description: "查原典、辨出处、比较五家解读，把国学问题讲透并给出结论"
+  default_prompt: "用 $guoxue-da-jieguo 对读《论语》和曾仕强讲座，聊聊命运和选择的关系。"
